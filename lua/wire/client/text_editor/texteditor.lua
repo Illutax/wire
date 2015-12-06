@@ -128,8 +128,8 @@ function EDITOR:OnMousePressed(code)
 						self.HighlightedAreasByDoubleClick[i] = { caretstart, caretstop }
 
 						-- This checks if it's NOT the word the user just highlighted
-						if (caretstart[1] != self.Start[1] or caretstart[2] != self.Start[2] or
-							caretstop[1] != self.Caret[1] or caretstop[2] != self.Caret[2]) then
+						if (caretstart[1] ~= self.Start[1] or caretstart[2] ~= self.Start[2] or
+							caretstop[1] ~= self.Caret[1] or caretstop[2] ~= self.Caret[2]) then
 								local c = self:GetSyntaxColor("dblclickhighlight")
 								self:HighlightArea( { caretstart, caretstop }, c.r, c.g, c.b, 100 )
 						end
@@ -152,7 +152,7 @@ function EDITOR:OnMousePressed(code)
 		self.MouseDown = true
 
 		self.Caret = self:CopyPosition( cursor )
-		if !input.IsKeyDown(KEY_LSHIFT) and !input.IsKeyDown(KEY_RSHIFT) then
+		if not input.IsKeyDown(KEY_LSHIFT) and not input.IsKeyDown(KEY_RSHIFT) then
 			self.Start = self:CopyPosition( cursor )
 		end
 		self:AC_Check()
@@ -305,18 +305,18 @@ function EDITOR:OnMousePressed(code)
 end
 
 function EDITOR:OnMouseReleased(code)
-	if !self.MouseDown then return end
+	if not self.MouseDown then return end
 
 	if code == MOUSE_LEFT then
 		self.MouseDown = nil
-		if(!self.tmp) then return end
+		if not self.tmp then return end
 		self.Caret = self:CursorToCaret()
 	end
 end
 
 function EDITOR:SetText(text)
 	self.Rows = string_Explode("\n", text)
-	if self.Rows[#self.Rows] != "" then
+	if self.Rows[#self.Rows] ~= "" then
 		self.Rows[#self.Rows + 1] = ""
 	end
 
@@ -336,8 +336,8 @@ function EDITOR:GetValue()
 end
 
 function EDITOR:HighlightLine( line, r, g, b, a )
-	if (!self.HighlightedLines) then self.HighlightedLines = {} end
-	if (!r and self.HighlightedLines[line]) then
+	if not self.HighlightedLines then self.HighlightedLines = {} end
+	if not r and self.HighlightedLines[line] then
 		self.HighlightedLines[line] = nil
 		return true
 	elseif (r and g and b and a) then
@@ -351,7 +351,7 @@ function EDITOR:ClearHighlightedLines() self.HighlightedLines = nil end
 function EDITOR:PaintLine(row)
 	if row > #self.Rows then return end
 
-	if !self.PaintRows[row] then
+	if not self.PaintRows[row] then
 		self.PaintRows[row] = self:SyntaxColorLine(row)
 	end
 
@@ -435,8 +435,8 @@ function EDITOR:PerformLayout()
 end
 
 function EDITOR:HighlightArea( area, r,g,b,a )
-	if (!self.HighlightedAreas) then self.HighlightedAreas = {} end
-	if (!r) then
+	if not self.HighlightedAreas then self.HighlightedAreas = {} end
+	if not r then
 		local _start, _stop = area[1], area[2]
 		for k,v in pairs( self.HighlightedAreas ) do
 			local start = v[1][1]
@@ -507,7 +507,7 @@ function EDITOR:PaintTextOverlay()
 		local BrackSt, BrackEnd = CaretChars:find("[%(%){}%[%]]")
 
 		local Bracket = false
-		if BrackSt and BrackSt != 0 then
+		if BrackSt and BrackSt ~= 0 then
 			Bracket = CaretChars:sub(BrackSt or 0,BrackEnd or 0)
 		end
 		if Bracket and BracketPairs[Bracket] then
@@ -562,7 +562,7 @@ function EDITOR:PaintTextOverlay()
 						EndX = (PrevText:find("\n",1,true) or 2)-2
 					end
 
-					if Bracket != "}" then
+					if Bracket ~= "}" then
 						OffsetSt = 0
 					end
 
@@ -584,11 +584,11 @@ local wire_expression2_editor_display_caret_pos = CreateClientConVar("wire_expre
 function EDITOR:Paint()
 	self.LineNumberWidth = self.FontWidth * #tostring(self.Scroll[1]+self.Size[1]+1)
 
-	if !input.IsMouseDown(MOUSE_LEFT) then
+	if not input.IsMouseDown(MOUSE_LEFT) then
 		self:OnMouseReleased(MOUSE_LEFT)
 	end
 
-	if !self.PaintRows then
+	if not self.PaintRows then
 		self.PaintRows = {}
 	end
 
@@ -740,25 +740,25 @@ function EDITOR:SetArea(selection, text, isundo, isredo, before, after)
 
 	local buffer = self:GetArea(selection)
 
-	if start[1] != stop[1] or start[2] != stop[2] then
-		// clear selection
+	if start[1] ~= stop[1] or start[2] ~= stop[2] then
+		-- clear selection
 		self.Rows[start[1]] = string_sub(self.Rows[start[1]], 1, start[2] - 1) .. string_sub(self.Rows[stop[1]], stop[2])
 		self.PaintRows[start[1]] = false
 
 		for i=start[1]+1,stop[1] do
 			table_remove(self.Rows, start[1] + 1)
 			table_remove(self.PaintRows, start[1] + 1)
-			self.PaintRows = {} // TODO: fix for cache errors
+			self.PaintRows = {} -- TODO: fix for cache errors
 		end
 
-		// add empty row at end of file (TODO!)
-		if self.Rows[#self.Rows] != "" then
+		-- add empty row at end of file (TODO!)
+		if self.Rows[#self.Rows] ~= "" then
 			self.Rows[#self.Rows + 1] = ""
 			self.PaintRows[#self.Rows + 1] = false
 		end
 	end
 
-	if !text or text == "" then
+	if not text or text == "" then
 		self.ScrollBar:SetUp(self.Size[1], #self.Rows - 1)
 
 		self.PaintRows = {}
@@ -778,7 +778,7 @@ function EDITOR:SetArea(selection, text, isundo, isredo, before, after)
 		end
 	end
 
-	// insert text
+	-- insert text
 	local rows = string_Explode("\n", text)
 
 	local remainder = string_sub(self.Rows[start[1]], start[2])
@@ -788,7 +788,7 @@ function EDITOR:SetArea(selection, text, isundo, isredo, before, after)
 	for i=2,#rows do
 		table_insert(self.Rows, start[1] + i - 1, rows[i])
 		table_insert(self.PaintRows, start[1] + i - 1, false)
-		self.PaintRows = {} // TODO: fix for cache errors
+		self.PaintRows = {} -- TODO: fix for cache errors
 	end
 
 	local stop = { start[1] + #rows - 1, #(self.Rows[start[1] + #rows - 1]) + 1 }
@@ -796,11 +796,11 @@ function EDITOR:SetArea(selection, text, isundo, isredo, before, after)
 	self.Rows[stop[1]] = self.Rows[stop[1]] .. remainder
 	self.PaintRows[stop[1]] = false
 
-	// add empty row at end of file (TODO!)
-	if self.Rows[#self.Rows] != "" then
+	-- add empty row at end of file (TODO!)
+	if self.Rows[#self.Rows] ~= "" then
 		self.Rows[#self.Rows + 1] = ""
 		self.PaintRows[#self.Rows + 1] = false
-		self.PaintRows = {} // TODO: fix for cache errors
+		self.PaintRows = {} -- TODO: fix for cache errors
 	end
 
 	self.ScrollBar:SetUp(self.Size[1], #self.Rows - 1)
@@ -972,8 +972,8 @@ function EDITOR:Find( str, looped )
 		temptext = temptext:lower()
 		str = str:lower()
 	end
-	local _start,_stop = temptext:find( str, 1, !use_patterns )
-	if (!_start or !_stop) then return false end
+	local _start,_stop = temptext:find( str, 1, not use_patterns )
+	if not _start or not _stop then return false end
 
 	if (dir) then -- Down
 		local line = self.Rows[self.Start[1]]
@@ -983,7 +983,7 @@ function EDITOR:Find( str, looped )
 
 		local offset = 2
 		for loop = 1, 100 do
-			local start, stop = text:find( str, offset, !use_patterns )
+			local start, stop = text:find( str, offset, not use_patterns )
 			if (start and stop) then
 
 				if (whole_word_only) then
@@ -1027,7 +1027,7 @@ function EDITOR:Find( str, looped )
 
 		local offset = 2
 		for loop = 1, 100 do
-			local start, stop = text:find( str, offset, !use_patterns )
+			local start, stop = text:find( str, offset, not use_patterns )
 			if (start and stop) then
 
 				if (whole_word_only) then
@@ -1072,12 +1072,12 @@ function EDITOR:Replace( str, replacewith )
 	local selection = self:GetSelection()
 
 	local _str = str
-	if (!use_patterns) then
+	if not use_patterns then
 		str = str:gsub( "[%-%^%$%(%)%%%.%[%]%*%+%?]", "%%%1" )
 		replacewith = replacewith:gsub( "%%", "%%%1" )
 	end
 
-	if (selection:match( str ) != nil) then
+	if (selection:match( str ) ~= nil) then
 		self:SetSelection( selection:gsub( str, replacewith ) )
 		return self:Find( _str )
 	else
@@ -1092,7 +1092,7 @@ function EDITOR:ReplaceAll( str, replacewith )
 	local ignore_case = wire_expression2_editor_find_ignore_case:GetBool()
 	local use_patterns = wire_expression2_editor_find_use_patterns:GetBool()
 
-	if (!use_patterns) then
+	if not use_patterns then
 		str = str:gsub( "[%-%^%$%(%)%%%.%[%]%*%+%?]", "%%%1" )
 		replacewith = replacewith:gsub( "%%", "%%%1" )
 	end
@@ -1145,7 +1145,7 @@ function EDITOR:CountFinds( str )
 	local ignore_case = wire_expression2_editor_find_ignore_case:GetBool()
 	local use_patterns = wire_expression2_editor_find_use_patterns:GetBool()
 
-	if (!use_patterns) then
+	if not use_patterns then
 		str = str:gsub( "[%-%^%$%(%)%%%.%[%]%*%+%?]", "%%%1" )
 	end
 
@@ -1266,7 +1266,7 @@ function EDITOR:CreateFindWindow()
 	dir_up:SizeToContents()
 	dir_up:SetPos( 130, 24 )
 	dir_up:SetTooltip( "Note: Most patterns won't work when searching up because the search function reverses the string to search backwards." )
-	dir_up:SetValue( !wire_expression2_editor_find_dir:GetBool() )
+	dir_up:SetValue( not wire_expression2_editor_find_dir:GetBool() )
 	dir_down:SetText( "Down" )
 	dir_down:SizeToContents()
 	dir_down:SetPos( 130, 44 )
@@ -1506,7 +1506,7 @@ function EDITOR:CreateFindWindow()
 end
 
 function EDITOR:OpenFindWindow( mode )
-	if (!self.FindWindow) then self:CreateFindWindow() end
+	if not self.FindWindow then self:CreateFindWindow() end
 	self.FindWindow:SetVisible( true )
 	self.FindWindow:MakePopup() -- This will move it above the E2 editor if it is behind it.
 	self.ForceDrawCursor = true
@@ -1514,13 +1514,13 @@ function EDITOR:OpenFindWindow( mode )
 	local selection = self:GetSelection():Left(100)
 
 	if (mode == "find") then
-		if (selection and selection != "") then self.FindWindow.FindTab.Entry:SetText( selection ) end
+		if (selection and selection ~= "") then self.FindWindow.FindTab.Entry:SetText( selection ) end
 		self.FindWindow.TabHolder:SetActiveTab( self.FindWindow.FindTab.Tab )
 		self.FindWindow.FindTab.Entry:RequestFocus()
 		self.FindWindow:SetHeight( 201 )
 		self.FindWindow.TabHolder:StretchToParent( 1, 23, 1, 1 )
 	elseif (mode == "find and replace") then
-		if (selection and selection != "") then self.FindWindow.ReplaceTab.Entry:SetText( selection ) end
+		if (selection and selection ~= "") then self.FindWindow.ReplaceTab.Entry:SetText( selection ) end
 		self.FindWindow.TabHolder:SetActiveTab( self.FindWindow.ReplaceTab.Tab )
 		self.FindWindow.ReplaceTab.Entry:RequestFocus()
 		self.FindWindow:SetHeight( 201 )
@@ -1607,7 +1607,7 @@ end
 
 -- Comment the currently selected area
 function EDITOR:BlockCommentSelection( removecomment )
-	if (!self:HasSelection()) then return end
+	if not self:HasSelection() then return end
 
 	local scroll = self:CopyPosition( self.Scroll )
 
@@ -1667,7 +1667,7 @@ end
 -- Idea by Jeremydeath
 -- Rewritten by Divran to use block comment
 function EDITOR:CommentSelection( removecomment )
-	if (!self:HasSelection()) then return end
+	if not self:HasSelection() then return end
 
 	-- Remember scroll position
 	local scroll = self:CopyPosition( self.Scroll )
@@ -1676,7 +1676,7 @@ function EDITOR:CommentSelection( removecomment )
 	local sel_start, sel_caret = self:MakeSelection( self:Selection() )
 	sel_start[2] = 1
 
-	if (sel_caret[2] != 1) then
+	if (sel_caret[2] ~= 1) then
 		sel_caret[1] = sel_caret[1] + 1
 		sel_caret[2] = 1
 	end
@@ -1875,7 +1875,7 @@ function EDITOR:_OnKeyCodeTyped(code)
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif code == KEY_RIGHT then
-			if self:HasSelection() and !shift then
+			if self:HasSelection() and not shift then
 				self.Start = self:CopyPosition(self.Caret)
 			else
 				self.Caret = self:wordRight(self.Caret)
@@ -1883,7 +1883,7 @@ function EDITOR:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if !shift then
+			if not shift then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		--[[ -- old code that scrolls on ctrl-left/right:
@@ -1899,7 +1899,7 @@ function EDITOR:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if !shift then
+			if not shift then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif code == KEY_END then
@@ -1908,7 +1908,7 @@ function EDITOR:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if !shift then
+			if not shift then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif code == KEY_D then
@@ -1918,7 +1918,7 @@ function EDITOR:_OnKeyCodeTyped(code)
 			local old_scroll = self:CopyPosition( self.Scroll )
 
 			local str = self:GetSelection()
-			if (str != "") then -- If you have a selection
+			if str ~= "" then -- If you have a selection
 				self:SetSelection( str:rep(2) ) -- Repeat it
 			else -- If you don't
 				-- Select the current line
@@ -1969,7 +1969,7 @@ function EDITOR:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if !shift then
+			if not shift then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif code == KEY_DOWN then
@@ -1992,11 +1992,11 @@ function EDITOR:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if !shift then
+			if not shift then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif code == KEY_LEFT then
-			if self:HasSelection() and !shift then
+			if self:HasSelection() and not shift then
 				self.Start = self:CopyPosition(self.Caret)
 			else
 				self.Caret = self:MovePosition(self.Caret, -1)
@@ -2004,11 +2004,11 @@ function EDITOR:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if !shift then
+			if not shift then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif code == KEY_RIGHT then
-			if self:HasSelection() and !shift then
+			if self:HasSelection() and not shift then
 				self.Start = self:CopyPosition(self.Caret)
 			else
 				self.Caret = self:MovePosition(self.Caret, 1)
@@ -2016,7 +2016,7 @@ function EDITOR:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if !shift then
+			if not shift then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif code == KEY_PAGEUP then
@@ -2030,7 +2030,7 @@ function EDITOR:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if !shift then
+			if not shift then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif code == KEY_PAGEDOWN then
@@ -2044,7 +2044,7 @@ function EDITOR:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if !shift then
+			if not shift then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif code == KEY_HOME then
@@ -2058,7 +2058,7 @@ function EDITOR:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if !shift then
+			if not shift then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif code == KEY_END then
@@ -2067,7 +2067,7 @@ function EDITOR:_OnKeyCodeTyped(code)
 
 			self:ScrollCaret()
 
-			if !shift then
+			if not shift then
 				self.Start = self:CopyPosition(self.Caret)
 			end
 		elseif code == KEY_BACKSPACE then
@@ -2152,7 +2152,7 @@ end
 
 function EDITOR:IsDirectiveLine()
 	local line = self.Rows[self.Caret[1]]
-	return line:match( "^@" ) != nil
+	return line:match( "^@" ) ~= nil
 end
 
 function EDITOR:getWordStart(caret,getword)
@@ -2247,7 +2247,7 @@ end
 
 tbl[1] = function( self )
 	local word, symbolinfront = self:AC_GetCurrentWord()
-	if (word and word != "" and word:sub(1,1) == "_") then
+	if word and word ~= "" and word:sub(1,1) == "_" then
 		return FindConstants( self, word )
 	end
 end
@@ -2294,10 +2294,10 @@ local function FindFunctions( self, has_colon, word )
 		if (wordl == func_id:lower():sub(1,len)) then -- Check if the beginning of the word matches
 			local name, types = func_id:match( "(.+)(%b())" ) -- Get the function name and types
 			local first_type, colon, other_types = types:match( "%((%w*)(:?)(.*)%)" ) -- Sort the function types
-			if (((has_colon and colon == ":") or (!has_colon and colon != ":"))) then -- If they both have colons (or not)
+			if (colon == ":") == has_colon then -- If they both have colons (or not)
 				first_type = first_type:upper()
 				other_types = other_types:upper()
-				if (!suggested[name]) then -- If it hasn't already been suggested
+				if not suggested[name] then -- If it hasn't already been suggested
 					count = count + 1
 					suggested[name] = count
 
@@ -2335,7 +2335,7 @@ end
 
 tbl[2] = function( self )
 	local word, symbolinfront = self:AC_GetCurrentWord()
-	if (word and word != "" and word:sub(1,1):upper() != word:sub(1,1)) then
+	if word and word ~= "" and word:sub(1,1):upper() ~= word:sub(1,1) then
 		return FindFunctions( self, (symbolinfront == ":"), word )
 	end
 end
@@ -2348,7 +2348,7 @@ end
 function EDITOR:AC_SaveVariables()
 	local OK, directives,_ = PreProcessor.Execute( self:GetValue() )
 
-	if (!OK or !directives) then
+	if not OK or not directives then
 		return
 	end
 
@@ -2377,16 +2377,16 @@ local function FindVariables( self, word )
 	local suggestions = {}
 
 	local directives = self.AC_Directives
-	if (!directives) then self:AC_SaveVariables() end -- If directives is nil, attempt to find
+	if not directives then self:AC_SaveVariables() end -- If directives is nil, attempt to find
 	directives = self.AC_Directives
-	if (!directives) then -- If finding failed, abort
+	if not directives then -- If finding failed, abort
 		self:AC_SetVisible( false )
 		return
 	end
 
 	for k,v in pairs( directives["inputs"][1] ) do
 		if (v:lower():sub(1,len) == wordl) then
-			if (!suggested[v]) then
+			if not suggested[v] then
 				suggested[v] = true
 				count = count + 1
 				suggestions[count] = GetTableForVariables( v )
@@ -2396,7 +2396,7 @@ local function FindVariables( self, word )
 
 	for k,v in pairs( directives["outputs"][1] ) do
 		if (v:lower():sub(1,len) == wordl) then
-			if (!suggested[v]) then
+			if not suggested[v] then
 				suggested[v] = true
 				count = count + 1
 				suggestions[count] = GetTableForVariables( v )
@@ -2406,7 +2406,7 @@ local function FindVariables( self, word )
 
 	for k,v in pairs( directives["persist"][1] ) do
 		if (v:lower():sub(1,len) == wordl) then
-			if (!suggested[v]) then
+			if not suggested[v] then
 				suggested[v] = true
 				count = count + 1
 				suggestions[count] = GetTableForVariables( v )
@@ -2419,7 +2419,7 @@ end
 
 tbl[3] = function( self )
 	local word, symbolinfront = self:AC_GetCurrentWord()
-	if (word and word != "" and word:sub(1,1):upper() == word:sub(1,1)) then
+	if word and word ~= "" and word:sub(1,1):upper() == word:sub(1,1) then
 		return FindVariables( self, word )
 	end
 end
@@ -2427,7 +2427,7 @@ end
 local wire_expression2_autocomplete = CreateClientConVar( "wire_expression2_autocomplete", "1", true, false )
 tbl.RunOnCheck = function( self )
 	-- Only autocomplete if it's the E2 editor, if it's enabled
-	if (!self:GetParent().E2 or !wire_expression2_autocomplete:GetBool()) then
+	if not self:GetParent().E2 or not wire_expression2_autocomplete:GetBool() then
 		self:AC_SetVisible( false )
 		return false
 	end
@@ -2440,13 +2440,13 @@ tbl.RunOnCheck = function( self )
 		return false
 	end
 
-	if (self:IsVarLine() and !self.AC_WasVarLine) then -- If the user IS editing a var line, and they WEREN'T editing a var line before this..
+	if self:IsVarLine() and not self.AC_WasVarLine then -- If the user IS editing a var line, and they WEREN'T editing a var line before this..
 		self.AC_WasVarLine = true
-	elseif (!self:IsVarLine() and self.AC_WasVarLine) then -- If the user ISN'T editing a var line, and they WERE editing a var line before this..
+	elseif not self:IsVarLine() and self.AC_WasVarLine then -- If the user ISN'T editing a var line, and they WERE editing a var line before this..
 		self.AC_WasVarLine = nil
 		self:AC_SaveVariables()
 	end
-	if (self:IsDirectiveLine()) then -- In case you're wondering, DirectiveLine != VarLine (A directive line is any line starting with @, a var line is @inputs, @outputs, and @persists)
+	if self:IsDirectiveLine() then -- In case you're wondering, DirectiveLine ~= VarLine (A directive line is any line starting with @, a var line is @inputs, @outputs, and @persists)
 		self:AC_SetVisible( false )
 		return false
 	end
@@ -2461,16 +2461,16 @@ end
 
 function EDITOR:AC_Check( notimer )
 
-	if (!notimer) then
+	if not notimer then
 		timer.Create("E2_AC_Check", 0, 1, function()
 			if self.AC_Check then self:AC_Check(true) end
 		end)
 		return
 	end
 
-	if (!self.AC_AutoCompletion) then self:AC_NewAutoCompletion( tbl ) end -- Default to E2 autocompletion
-	if (!self.AC_Panel) then self:AC_CreatePanel() end
-	if (self.AC_AutoCompletion.RunOnCheck) then
+	if not self.AC_AutoCompletion then self:AC_NewAutoCompletion( tbl ) end -- Default to E2 autocompletion
+	if not self.AC_Panel then self:AC_CreatePanel() end
+	if self.AC_AutoCompletion.RunOnCheck then
 		local ret = self.AC_AutoCompletion.RunOnCheck( self )
 		if (ret == false) then
 			return
@@ -2483,7 +2483,7 @@ function EDITOR:AC_Check( notimer )
 	local suggestions = {}
 	for i=1,#self.AC_AutoCompletion do
 		local _suggestions = self.AC_AutoCompletion[i]( self )
-		if (_suggestions != nil and #_suggestions > 0) then
+		if _suggestions ~= nil and #_suggestions > 0 then
 			suggestions = _suggestions
 			break
 		end
@@ -2537,7 +2537,7 @@ end
 -----------------------------------------------------------
 local wire_expression2_autocomplete_highlight_after_use = CreateClientConVar("wire_expression2_autocomplete_highlight_after_use","1",true,false)
 function EDITOR:AC_Use( suggestion )
-	if (!suggestion) then return false end
+	if not suggestion then return false end
 	local ret = false
 
 	-- Get word position
@@ -2554,7 +2554,7 @@ function EDITOR:AC_Use( suggestion )
 	end
 
 	-- Overwrite selection
-	if (replacement and replacement != "") then
+	if replacement and replacement ~= "" then
 		self:SetArea( { wordstart, wordend }, replacement )
 
 		-- Move caret
@@ -2596,7 +2596,7 @@ function EDITOR:AC_CreatePanel()
 
 	-- Override think, to make it listen for key presses
 	panel.Think = function( pnl, code )
-		if (!self.AC_HasSuggestions or !self.AC_Panel_Visible) then return end
+		if not self.AC_HasSuggestions or not self.AC_Panel_Visible then return end
 
 		local mode = wire_expression2_autocomplete_controlstyle:GetInt()
 		if (mode == 0) then -- Default style - Tab/CTRL+Tab to choose item;\nEnter/Space to use;\nArrow keys to abort.
@@ -2604,7 +2604,7 @@ function EDITOR:AC_CreatePanel()
 			if (input.IsKeyDown( KEY_ENTER ) or input.IsKeyDown( KEY_SPACE )) then -- Use
 				self:AC_SetVisible( false )
 				self:AC_Use( self.AC_Suggestions[pnl.Selected] )
-			elseif (input.IsKeyDown( KEY_TAB ) and !pnl.AlreadySelected) then -- Select
+			elseif input.IsKeyDown( KEY_TAB ) and not pnl.AlreadySelected then -- Select
 				if (input.IsKeyDown( KEY_LCONTROL )) then -- If control is held down
 					pnl.Selected = pnl.Selected - 1 -- Scroll up
 					if (pnl.Selected < 1) then pnl.Selected = #self.AC_Suggestions end
@@ -2615,7 +2615,7 @@ function EDITOR:AC_CreatePanel()
 				self:AC_FillInfoList( self.AC_Suggestions[pnl.Selected] ) -- Fill the info list
 				pnl:RequestFocus()
 				pnl.AlreadySelected = true -- To keep it from scrolling a thousand times a second
-			elseif (pnl.AlreadySelected and !input.IsKeyDown( KEY_TAB )) then
+			elseif pnl.AlreadySelected and not input.IsKeyDown( KEY_TAB ) then
 				pnl.AlreadySelected = nil
 			elseif (input.IsKeyDown( KEY_UP ) or input.IsKeyDown( KEY_DOWN ) or input.IsKeyDown( KEY_LEFT ) or input.IsKeyDown( KEY_RIGHT )) then
 				self:AC_SetVisible( false )
@@ -2626,17 +2626,17 @@ function EDITOR:AC_CreatePanel()
 			if (input.IsKeyDown( KEY_TAB ) or input.IsKeyDown( KEY_ENTER ) or input.IsKeyDown( KEY_SPACE )) then -- Use
 				self:AC_SetVisible( false )
 				self:AC_Use( self.AC_Suggestions[pnl.Selected] )
-			elseif (input.IsKeyDown( KEY_DOWN ) and !pnl.AlreadySelected) then -- Select
+			elseif input.IsKeyDown( KEY_DOWN ) and not pnl.AlreadySelected then -- Select
 				pnl.Selected = pnl.Selected + 1 -- Scroll down
 				if (pnl.Selected > #self.AC_Suggestions) then pnl.Selected = 1 end
 				self:AC_FillInfoList( self.AC_Suggestions[pnl.Selected] ) -- Fill the info list
 				pnl.AlreadySelected = true -- To keep it from scrolling a thousand times a second
-			elseif (input.IsKeyDown( KEY_UP ) and !pnl.AlreadySelected) then -- Select
+			elseif input.IsKeyDown( KEY_UP ) and not pnl.AlreadySelected then -- Select
 				pnl.Selected = pnl.Selected - 1 -- Scroll up
 				if (pnl.Selected < 1) then pnl.Selected = #self.AC_Suggestions end
 				self:AC_FillInfoList( self.AC_Suggestions[pnl.Selected] ) -- Fill the info list
 				pnl.AlreadySelected = true -- To keep it from scrolling a thousand times a second
-			elseif (pnl.AlreadySelected and !input.IsKeyDown( KEY_UP ) and !input.IsKeyDown( KEY_DOWN )) then
+			elseif pnl.AlreadySelected and not input.IsKeyDown( KEY_UP ) and not input.IsKeyDown( KEY_DOWN ) then
 				pnl.AlreadySelected = nil
 			end
 
@@ -2661,17 +2661,17 @@ function EDITOR:AC_CreatePanel()
 				self:AC_Use( self.AC_Suggestions[pnl.Selected] )
 			elseif (input.IsKeyDown( KEY_SPACE )) then
 				self:AC_SetVisible( false )
-			elseif (input.IsKeyDown( KEY_DOWN ) and !pnl.AlreadySelected) then -- Select
+			elseif input.IsKeyDown( KEY_DOWN ) and not pnl.AlreadySelected then -- Select
 				pnl.Selected = pnl.Selected + 1 -- Scroll down
 				if (pnl.Selected > #self.AC_Suggestions) then pnl.Selected = 1 end
 				self:AC_FillInfoList( self.AC_Suggestions[pnl.Selected] ) -- Fill the info list
 				pnl.AlreadySelected = true -- To keep it from scrolling a thousand times a second
-			elseif (input.IsKeyDown( KEY_UP ) and !pnl.AlreadySelected) then -- Select
+			elseif input.IsKeyDown( KEY_UP ) and not pnl.AlreadySelected then -- Select
 				pnl.Selected = pnl.Selected - 1 -- Scroll up
 				if (pnl.Selected < 1) then pnl.Selected = #self.AC_Suggestions end
 				self:AC_FillInfoList( self.AC_Suggestions[pnl.Selected] ) -- Fill the info list
 				pnl.AlreadySelected = true -- To keep it from scrolling a thousand times a second
-			elseif (pnl.AlreadySelected and !input.IsKeyDown( KEY_UP ) and !input.IsKeyDown( KEY_DOWN )) then
+			elseif pnl.AlreadySelected and not input.IsKeyDown( KEY_UP ) and not input.IsKeyDown( KEY_DOWN ) then
 				pnl.AlreadySelected = nil
 			end
 
@@ -2724,7 +2724,7 @@ end
 function EDITOR:AC_FillInfoList( suggestion )
 	local panel = self.AC_Panel
 
-	if (!suggestion or !suggestion.description or !wire_expression2_autocomplete_moreinfo:GetBool()) then -- If the suggestion is invalid, the suggestion does not need additional information, or if the user has disabled additional information, abort
+	if not suggestion or not suggestion.description or not wire_expression2_autocomplete_moreinfo:GetBool() then -- If the suggestion is invalid, the suggestion does not need additional information, or if the user has disabled additional information, abort
 		panel:SetSize( panel.curw, panel.curh )
 		panel.infolist:SetPos( 1000, 1000 )
 		return
@@ -2744,12 +2744,12 @@ function EDITOR:AC_FillInfoList( suggestion )
 	local others
 	if (suggestion.others) then others = suggestion:others( self ) end
 
-	if (desc and desc != "") then
+	if desc and desc ~= "" then
 		desc = "Description:\n" .. desc
 	end
 
 	if (#others > 0) then -- If there are other functions with the same name...
-		desc = (desc or "") .. ((desc and desc != "") and "\n" or "") .. "Others with the same name:"
+		desc = (desc or "") .. ((desc and desc ~= "") and "\n" or "") .. "Others with the same name:"
 
 		-- Loop through the "others" table to add all of them
 		surface_SetFont( "E2SmallFont" )
@@ -2776,7 +2776,7 @@ function EDITOR:AC_FillInfoList( suggestion )
 		end
 	end
 
-	if (!desc or desc == "") then
+	if not desc or desc == "" then
 		panel:SetSize( panel.curw, panel.curh )
 		infolist:SetPos( 1000, 1000 )
 		return
@@ -2872,7 +2872,7 @@ end
 -----------------------------------------------------------
 
 function EDITOR:AC_SetVisible( bool )
-	if (self.AC_Panel_Visible == bool or !self.AC_Panel) then return end
+	if self.AC_Panel_Visible == bool or not self.AC_Panel then return end
 	self.AC_Panel_Visible = bool
 	self.AC_Panel:SetVisible( bool )
 	self.AC_Panel.infolist:SetPos( 1000, 1000 )
@@ -2887,7 +2887,7 @@ function EDITOR:AC_Reset()
 	self.AC_Suggestions = false
 	self.AC_Directives = nil
 	local panel = self.AC_Panel
-	if (!panel) then return end
+	if not panel then return end
 	self:AC_SetVisible( false )
 	panel.list:Clear()
 	panel.infolist:Clear()
@@ -2907,8 +2907,8 @@ function EDITOR:Think()
 	local caret = self:CursorToCaret()
 	local startpos, word = self:getWordStart( caret, true )
 
-	if (word and word != "") then
-		if !haschecked then
+	if word and word ~= "" then
+		if not haschecked then
 			oldpos = {startpos[1],startpos[2]}
 			haschecked = true
 			timer.Simple(0.3,function()
@@ -2920,7 +2920,7 @@ function EDITOR:Think()
 					self.CurrentVarValue = { startpos, word }
 				end
 			end)
-		elseif ((oldpos[1] != startpos[1] or oldpos[2] != startpos[2]) and haschecked) then
+		elseif (oldpos[1] ~= startpos[1] or oldpos[2] ~= startpos[2]) and haschecked then
 			haschecked = false
 			self.CurrentVarValue = nil
 			oldpos = {0,0}
@@ -2972,7 +2972,7 @@ function EDITOR:GetTokenAtPosition( caret )
 	end
 end
 
-/***************************** Syntax highlighting ****************************/
+-- Syntax highlighting --------------------------------------------------------
 
 function EDITOR:ResetTokenizer(row)
 	self.line = self.Rows[row]
@@ -3056,7 +3056,7 @@ end
 
 function EDITOR:SkipPattern(pattern)
 	-- TODO: share code with NextPattern
-	if !self.character then return nil end
+	if not self.character then return nil end
 	local startpos,endpos,text = self.line:find(pattern, self.position)
 
 	if startpos ~= self.position then return nil end
@@ -3076,7 +3076,7 @@ function EDITOR:SkipPattern(pattern)
 end
 
 function EDITOR:NextPattern(pattern)
-	if !self.character then return false end
+	if not self.character then return false end
 	local startpos,endpos,text = self.line:find(pattern, self.position)
 
 	if startpos ~= self.position then return false end
@@ -3116,7 +3116,7 @@ do -- E2 Syntax highlighting
 		["else"]     = { [true] = true },
 		["break"]    = { [true] = true },
 		["continue"] = { [true] = true },
-		//["function"] = { [true] = true },
+		--["function"] = { [true] = true },
 		["return"] = { [true] = true },
 		["local"]  = { [true] = true },
 	}
@@ -3164,7 +3164,7 @@ do -- E2 Syntax highlighting
 	end
 
 	function EDITOR:SetSyntaxColor( colorname, colr )
-		if (!colors[colorname]) then return end
+		if not colors[colorname] then return end
 		colors[colorname][1] = colr
 	end
 
@@ -3382,7 +3382,7 @@ do -- E2 Syntax highlighting
 			-- eat all spaces
 			local spaces = self:SkipPattern(" *")
 			if spaces then addToken("operator", spaces) end
-			if !self.character then break end
+			if not self.character then break end
 
 			-- eat next token
 			if self:NextPattern("^_[A-Z][A-Z_0-9]*") then
@@ -3414,7 +3414,7 @@ do -- E2 Syntax highlighting
 				else
 					-- is this a keyword or a function?
 					local char = self.character or ""
-					local keyword = char != "("
+					local keyword = char ~= "("
 
 					local spaces = self:SkipPattern(" *") or ""
 
@@ -3617,7 +3617,7 @@ do
 			self.tokendata = ""
 
 			self:NextPattern(" *")
-			if !self.character then break end
+			if not self.character then break end
 
 			if self:NextPattern("^[a-zA-Z0-9_@.]+:") then
 				tokenname = "label"
