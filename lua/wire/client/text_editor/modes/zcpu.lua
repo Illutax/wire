@@ -1,0 +1,199 @@
+WireTextEditor.Modes.ZCPU = {}
+
+local colors = {
+  ["normal"]   = { Color(255, 255, 136), false},
+  ["opcode"]   = { Color(255, 136,   0), false},
+  ["comment"]  = { Color(128, 128, 128), false},
+  ["register"] = { Color(255, 255, 136), false},
+  ["number"]   = { Color(232, 232,   0), false},
+  ["string"]   = { Color(255, 136, 136), false},
+  ["filename"] = { Color(232, 232, 232), false},
+  ["label"]    = { Color(255, 255, 176), false},
+  ["keyword"]  = { Color(255, 136,   0), false},
+  ["memref"]   = { Color(232, 232,   0), false},
+  ["pmacro"]   = { Color(136, 136, 255), false},
+  ["error"]    = { Color(240,  96,  96), false},
+  --		["compare"]  = { Color(255, 186,  40), true},
+}
+WireTextEditor.Modes.ZCPU.SyntaxColors = colors
+
+-- Build lookup table for opcodes
+local opcodeTable = {}
+for k,v in pairs(CPULib.InstructionTable) do
+  if v.Mnemonic ~= "RESERVED" then
+    opcodeTable[v.Mnemonic] = true
+  end
+end
+
+-- Build lookup table for keywords
+local keywordsList = {
+  "GOTO","FOR","IF","ELSE","WHILE","DO","SWITCH","CASE","CONST","RETURN","BREAK",
+  "CONTINUE","EXPORT","INLINE","FORWARD","REGISTER","DB","ALLOC","SCALAR","VECTOR1F",
+  "VECTOR2F","UV","VECTOR3F","VECTOR4F","COLOR","VEC1F","VEC2F","VEC3F","VEC4F","MATRIX",
+  "STRING","DB","DEFINE","CODE","DATA","ORG","OFFSET","INT48","FLOAT","CHAR","VOID",
+  "INT","FLOAT","CHAR","VOID","PRESERVE","ZAP","STRUCT","VECTOR"
+}
+
+local keywordsTable = {}
+for k,v in pairs(keywordsList) do
+  keywordsTable[v] = true
+end
+
+-- Build lookup table for registers
+local registersTable = {
+  EAX = true,EBX = true,ECX = true,EDX = true,ESI = true,EDI = true,
+  ESP = true,EBP = true,CS = true,SS = true,DS = true,ES = true,GS = true,
+  FS = true,KS = true,LS = true
+}
+for reg=0,31 do registersTable["R"..reg] = true end
+for port=0,1023 do registersTable["PORT"..port] = true end
+
+-- Build lookup table for macros
+local macroTable = {
+  ["PRAGMA"] = true,
+  ["INCLUDE"] = true,
+  ["#INCLUDE##"] = true,
+  ["DEFINE"] = true,
+  ["IFDEF"] = true,
+  ["IFNDEF"] = true,
+  ["ENDIF"] = true,
+  ["ELSE"] = true,
+  ["UNDEF"] = true,
+}
+
+function WireTextEditor.Modes.ZCPU:SyntaxColorLine(row)
+  local cols = {}
+  self:ResetTokenizer(row)
+  self:NextCharacter()
+
+  if self.blockcomment then
+    if self:NextPattern(".-%*/") then
+      self.blockcomment = nil
+    else
+      self:NextPattern(".*")
+    end
+
+    cols[#cols + 1] = {self.tokendata, colors["comment"]}
+  end
+
+  local isGpu = self:GetParent().EditorType == "GPU"
+
+  while self.character do
+    local tokenname = ""
+    self.tokendata = ""
+
+    self:NextPattern(" *")
+    if not self.character then break end
+
+    if self:NextPattern("^[a-zA-Z0-9_@.]+:") then
+      tokenname = "label"
+    elseif self:NextPattern("^[a-zA-Z0-9_@.]+") then
+      local sstr = string.upper(self.tokendata:Trim())
+      if opcodeTable[sstr] then
+        tokenname = "opcode"
+      elseif registersTable[sstr] then
+        tokenname = "register"
+      elseif keywordsTable[sstr] then
+        tokenname = "keyword"
+      elseif tonumber(self.tokendata) then
+        tokenname = "number"
+      else
+        tokenname = "normal"
+      end
+    elseif (self.character == "'") or (self.character == "\"")  then
+      tokenname = "string"
+      local delimiter = self.character
+      self:NextCharacter()
+      while self.character ~= delimiter do
+        if not self.character then tokenname = "error" break end
+        if self.character == "\\" then self:NextCharacter() end
+        self:NextCharacter()
+      end
+      self:NextCharacter()
+    elseif self:NextPattern("^//.*$") then
+      tokenname = "comment"
+    elseif self:NextPattern("^/%*") then -- start of a multi-line comment
+    --addToken("comment", self.tokendata)
+    self.blockcomment = true
+    if self:NextPattern(".-%*/") then
+      self.blockcomment = nil
+    else
+      self:NextPattern(".*")
+    end
+
+    tokenname = "comment"
+    elseif (self.character == "#") then
+      self:NextCharacter()
+
+      if self:NextPattern("include +<") then
+
+        cols[#cols + 1] = {self.tokendata:sub(1,-2), colors["pmacro"]}
+
+        self.tokendata = "<"
+        if self:NextPattern("^[a-zA-Z0-9_/\\]+%.txt>") then
+          tokenname = "filename"
+        else
+          self:NextPattern(".*$")
+          tokenname = "normal"
+        end
+      elseif self:NextPattern("include +\"") then
+
+        cols[#cols + 1] = {self.tokendata:sub(1,-2), colors["pmacro"]}
+
+        self.tokendata = "\""
+        if self:NextPattern("^[a-zA-Z0-9_/\\]+%.txt\"") then
+          tokenname = "filename"
+        else
+          self:NextPattern(".*$")
+          tokenname = "normal"
+        end
+      elseif self:NextPattern("^[a-zA-Z0-9_@.#]+") then
+        local sstr = string.sub(string.upper(self.tokendata:Trim()),2)
+        if macroTable[sstr] then
+          self:NextPattern(".*$")
+          tokenname = "pmacro"
+        else
+          tokenname = "memref"
+        end
+      else
+        tokenname = "memref"
+      end
+    elseif (self.character == "[") or (self.character == "]") then
+      self:NextCharacter()
+      tokenname = "memref"
+    else
+      self:NextCharacter()
+      tokenname = "normal"
+    end
+
+    local color = colors[tokenname]
+    if #cols > 1 and color == cols[#cols][2] then
+      cols[#cols][1] = cols[#cols][1] .. self.tokendata
+    else
+      cols[#cols + 1] = {self.tokendata, color}
+    end
+  end
+  return cols
+end
+
+function WireTextEditor.Modes.ZCPU:BlockCommentSelection(removecomment)
+  local sel_start, sel_caret = self:MakeSelection( self:Selection() )
+
+  local str = self:GetSelection()
+  if removecomment then
+    if (str:find( "^/%*" ) and str:find( "%*/$" )) then
+    self:SetSelection( str:gsub( "^/%*(.+)%*/$", "%1" ) )
+
+    sel_caret[2] = sel_caret[2] - 2
+  end
+else
+  self:SetSelection( "/*" .. str .. "*/" )
+
+  if (sel_caret[1] == sel_start[1]) then
+    sel_caret[2] = sel_caret[2] + 4
+  else
+    sel_caret[2] = sel_caret[2] + 2
+  end
+end
+
+end
